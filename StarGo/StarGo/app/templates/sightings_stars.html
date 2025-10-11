@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    {% if perms.app.delete_celebrities %}
+        {% include 'nav_admin.html' %}
+    {% else %}
+        {% include 'nav.html' %}
+    {% endif %}
+
+    <section class="d-flex flex-column justify-content-start m-3 mt-5" style="border: none solid orange; height: auto;">
+        <!-- <div class="container d-flex flex-column align-items-center position-relative mt-5 gap-3"> -->
+
+        <form enctype="multipart/form-data" method="post" class="container d-flex flex-column align-items-center position-relative mt-5 gap-3">
+            <h1>Where just {{ celebrities.nickname }} went</h1>
+            {% csrf_token %}
+
+            <div class="d-flex gap-5 w-100 justify-content-center">
+                <div class="w-25 ">
+                    <label for="places" class="form-label">Places</label>
+                    <!-- <input type="text" name="" id="" class="form-control bg-light"> -->
+                    {{ form.places }}
+                </div>
+                <div class="w-25 ">
+                    <label for="arrivaldate" class="form-label">Arrival Date</label>
+                    <!-- <input type="text" name="" id="" class="form-control bg-light"> -->
+                    {{ form.arrivaldate }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-5 w-100 justify-content-center">
+
+            </div>
+            <!-- <div class="container d-flex flex-column align-items-center position-relative my-5 gap-3 border-top"> -->
+
+            <div>
+                <a href="{% url 'stars_sortby' celebrities_id=celebrities_id %}" class="btn btn-lg mt-4 bg-secondary" style="color: white;">Back</a>
+                <button type="submit" class="btn btn-lg mt-4" style="background-color: #FFBC00;" onclick="">Confirm</button>
+            </div>
+        </form>
+
+            <!-- {% if uploaded_file_url %}
+            <p>File uploaded at: <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a></p>
+            {% endif %} -->
+
+    </section>
+
+    <!-- <section class="d-flex flex-column align-items-start m-3 border-top">
+        <div class="container mt-5">
+            <h4>Where to go</h4>
+        </div>
+        <div class="container d-flex flex-wrap gap-2 mt-1 justify-content-center">
+            <div class="border d-flex flex-column align-items-center rounded" style="height: 50vh;">
+                <img src="/static/Megabangna.webp" alt="" style="width: 15vw;" class="m-3">
+                <h4>kanigi</h4>
+                <p class="fs-5">vitita ifeifeajife</p>
+            </div>
+            <div class="border d-flex flex-column align-items-center rounded" style="height: 50vh;">
+                <img src="/static/Megabangna.webp" alt="" style="width: 15vw;" class="m-3">
+                <h4>kanigi</h4>
+                <p class="fs-5">vitita ifeifeajife</p>
+            </div>            
+            <div class="border d-flex flex-column align-items-center rounded" style="height: 50vh;">
+                <img src="/static/Megabangna.webp" alt="" style="width: 15vw;" class="m-3">
+                <h4>kanigi</h4>
+                <p class="fs-5">vitita ifeifeajife</p>
+            </div>            
+            <div class="border d-flex flex-column align-items-center rounded" style="height: 50vh;">
+                <img src="/static/Megabangna.webp" alt="" style="width: 15vw;" class="m-3">
+                <h4>kanigi</h4>
+                <p class="fs-5">vitita ifeifeajife</p>
+            </div>            
+            <div class="border d-flex flex-column align-items-center rounded" style="height: 50vh;">
+                <img src="/static/Megabangna.webp" alt="" style="width: 15vw;" class="m-3">
+                <h4>kanigi</h4>
+                <p class="fs-5">vitita ifeifeajife</p>
+            </div>
+
+            <div class="border d-flex flex-column align-items-center rounded" style="height: 50vh;">
+                <img src="/static/Megabangna.webp" alt="" style="width: 15vw;" class="m-3">
+                <h4>kanigi</h4>
+                <p class="fs-5">vitita ifeifeajife</p>
+            </div>
+        </div>
+    </section> -->
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
+<script>
+
+
+    // ข้อมูลสมมติ
+    const suggestions = [
+        'Elon Musk', 
+        'Emma Watson', 
+        'Bill Gates', 
+        'Taylor Swift',
+        'Dwayne Johnson', 
+        'Leonardo DiCaprio', 
+        'Ariana Grande',
+        'Jeff Bezos', 
+        'Tom Hanks'
+    ];
+// ดึง element ที่เราจะใช้งานมาเก็บในตัวแปร
+    const searchInput = document.getElementById('searchInput');
+    const resultsContainer = document.getElementById('searchResults');
+// Event Listener: คอย "ฟัง" การพิมพ์ในช่องค้นหา
+    searchInput.addEventListener('input', function() {
+        const inputValue = this.value.toLowerCase();
+        resultsContainer.innerHTML = ''; // เคลียร์ผลลัพธ์เก่า
+
+        if (inputValue.length > 0) {    
+            const filteredSuggestions = suggestions.filter(suggestion => 
+            suggestion.toLowerCase().includes(inputValue)
+        );
+    
+            if (filteredSuggestions.length > 0) {
+                filteredSuggestions.forEach(item => {
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.className = 'list-group-item list-group-item-action';
+                    link.textContent = item;
+                    
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        searchInput.value = this.textContent;
+                        resultsContainer.innerHTML = '';
+                    });
+
+                    resultsContainer.appendChild(link);
+                });
+            }
+        }
+    });
+</script>
+
+<script>
+    // ใช้ id เหมือนที่ตั้งกับ label
+    const image = document.getElementById('imageupload')
+    const preview = document.getElementById('preview')
+    image.addEventListener('change', () => {
+        const [file] = image.files
+        if (file) {
+        preview.src = URL.createObjectURL(file)
+        preview.classList.remove('hidden')
+        }
+    })
+</script>
+
+<script>
+    function showalert() {
+        alert('your data have been added!');
+        return true;
+    }
+</script>
+
+</html>

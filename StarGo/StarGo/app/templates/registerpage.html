@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <header>
+    </header>
+
+    <section class="d-flex flex-column justify-content-center m-3" style="border: none solid orange; height: 95vh;">
+        <div class="container d-flex flex-column align-items-center position-relative gap-3">
+            <h2>Sign up for StarGo</h2>
+            
+            <form method="post" action="" class="d-flex flex-column w-25 gap-3 ">
+            {% csrf_token %}
+                <div class="d-flex flex-column">
+                    <!-- <label for="firstName" class="form-label">First name</label> -->
+                    <!-- <input type="text" name="first_name" id="first_name" class="form-control bg-light"> -->
+                    {{form.first_name.label_tag}}
+                    {{form.first_name}}
+                    {% if form.first_name.errors %}
+                        <div class="text-danger mt-1">{{ form.first_name.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-column">
+                    <!-- <label for="lastName" class="form-label">Last name</label>
+                    <input type="text" name="last_name" id="last_name" class="form-control bg-light"> -->
+                    {{form.last_name.label_tag}}
+                    {{form.last_name}}
+                    {% if form.last_name.errors %}
+                        <div class="text-danger mt-1">{{ form.last_name.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-column">
+                    <!-- <label for="username" class="form-label">Username</label>
+                    <input type="text" name="username" id="username" class="form-control bg-light"> -->
+                    {{form.username.label_tag}}
+                    {{form.username}}
+                    {% if form.username.errors %}
+                        <div class="text-danger mt-1">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-column">
+                    <!-- <label for="password" class="form-label">Password</label>
+                    <input type="password" name="password1" id="password1" class="form-control bg-light"> -->
+                    {{form.password1.label_tag}}
+                    {{form.password1}}
+                    {% if form.password1.errors %}
+                        <div class="text-danger mt-1">{{ form.password1.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-column">
+                    <!-- <label for="password" class="form-label">Password confirmation</label>
+                    <input type="password" name="password2" id="password2" class="form-control bg-light"> -->
+                    {{form.password2.label_tag}}
+                    {{form.password2}}
+                    {% if form.password2.errors %}
+                        <div class="text-danger mt-1">{{ form.password2.errors }}</div>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn" style="background-color: #FFBC00;">Register and Login</button>
+                
+                {% if messages %}
+                <div>
+                    {% for message in messages %}
+                        <p class="text-danger">{{ message }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="d-flex flex-column align-items-center">
+                    <p>already have an account? <a href="{% url 'loginpage' %}">Log in</a></p>
+                </div>
+            </form>
+        
+        </div>
+    </section>
+
+
+
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
+
+</html>

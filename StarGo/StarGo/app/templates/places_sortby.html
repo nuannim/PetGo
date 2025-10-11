@@ -1,0 +1,279 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        /* 1. สร้าง container สำหรับดาว และใช้เทคนิคเรียงจากขวาไปซ้าย */
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end; /* จัดให้ดาวชิดซ้ายของ container */
+        }
+
+        /* 2. ซ่อน radio button จริงๆ đi */
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+
+        /* 3. ทำให้ label (ดาว) คลิกได้และเปลี่ยน cursor */
+        .star-rating label {
+            font-size: 1.8rem; /* ขนาดของดาว (ปรับได้) */
+            color: #ddd;      /* สีของดาวตอนที่ยังไม่ถูกเลือก (สีเทา) */
+            cursor: pointer;
+            padding: 0 2px;
+        }
+
+        /* 4. ใช้ไอคอนรูปดาว (Bootstrap Icons) */
+        .star-rating label::before {
+            content: '\F586'; /* รหัสของไอคอน bi-star (ดาวโปร่ง) */
+            font-family: 'bootstrap-icons';
+        }
+
+        /* 5. นี่คือส่วนที่สำคัญที่สุด: เมื่อ hover หรือ check ให้เปลี่ยนสีดาว */
+        .star-rating label:hover,
+        .star-rating label:hover ~ label, /* เลือก label ทั้งหมดที่อยู่ "ถัดไป" (ซึ่งคือดาวทางซ้าย) */
+        .star-rating input[type="radio"]:checked ~ label { /* เลือก label ทั้งหมดที่อยู่ "ถัดไป" ของ input ที่ถูก check */
+            color: #FFC107; /* สีเหลืองทอง */
+        }
+
+        /* (ทางเลือก) เปลี่ยนเป็นดาวเต็มเมื่อถูกเลือกหรือ hover */
+        .star-rating label:hover::before,
+        .star-rating label:hover ~ label::before,
+        .star-rating input[type="radio"]:checked ~ label::before {
+            content: '\F586'; /* รหัสของไอคอน bi-star-fill (ดาวเต็ม) */
+        }
+
+        /* ปุ่มสีเหลืองที่ hover จะเข้มขึ้นเล็กน้อย */
+        .btn-custom {
+            background-color: #FFBC00;
+            color: #000; /* ตัวอักษรสีดำ */
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .btn-custom:hover {
+
+            color: #000;
+            text-decoration: none;
+            box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+        }
+
+        .card-custom {
+            transition: transform 0.3s, box-shadow 0.3s; /* ทำให้ animation นุ่มนวล */
+        }
+
+        .card-custom:hover {
+            transform: translateY(-5px);  /* ยกการ์ดขึ้นเล็กน้อย */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); /* เพิ่มเงาเมื่อ hover */
+        }
+    </style>
+
+</head>
+
+<body>
+    {% if perms.app.delete_celebrities %}
+        {% include 'nav_admin.html' %}
+    {% else %}
+        {% include 'nav.html' %}
+    {% endif %}
+
+    <section class="d-flex flex-column justify-content-start m-3" style="border: none solid orange; height: auto;">
+        <div class="container d-flex flex-column align-items-center position-relative my-5">
+
+            <div class="input-group input-group m-5" style="width: 50vw;">
+                <span class="input-group-text border-0" id="basic-addon1" style="background-color: #FFBC00; border-radius: 0%; ">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input id="searchInput" type="text" class="form-control border-0" placeholder="Search where to go" style="background-color: #FFBC00; border-radius: 0%;">
+                <div id="searchResults" class="list-group position-absolute w-100 mt-5"></div>
+            </div>
+
+            <div class="d-flex">
+                {% if not thisplace.imageurl %}
+                <img src="{% static 'default-place.png' %}" alt="" class="shadow rounded-3" style="width: 30vw;">
+                {% else %}
+                <img src="{{ thisplace.imageurl.url }}" alt="" class="shadow rounded-3" style="width: 30vw;">
+                {% endif %}
+            </div>
+
+            <div class="d-flex flex-column align-items-center mt-3">
+                <h1>{{thisplace.name}}</h1>
+                <p class="fs-4">{{thisplace.address}}</p>
+                <div class="d-flex gap-3 mt-2">
+                    <!-- <a href="">Add Sighting</a> -->
+                    <a href="{% url 'sightings' %}?place_id={{ thisplace.id }}" class="btn btn-lg d-inline-flex align-items-center gap-2 btn-custom" style="background-color: #FFBC00;" class="btn btn-lg"><i class="bi bi-plus"></i></i>Who go</a>
+                    <a href="{{ thisplace.googlemaplink }}" class="btn btn-lg d-inline-flex align-items-center gap-2 btn-custom" style="background-color: #FFBC00;" class="btn btn-lg"> <i class="bi bi-geo-alt-fill"></i>Google Maps</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="d-flex flex-column align-items-start m-3 border-top">
+        <div class="container mt-5 mb-3 d-flex justify-content-center">
+            <h3>Who came here?</h3>
+        </div>
+        <div class="container d-flex flex-row gap-3 flex-wrap justify-content-center p-3 mb-3" style="overflow-y: auto;">
+        {% if whocamehere %}
+            {% for i in whocamehere %}
+            <!-- Card with a fixed width -->
+            <a href="{% url 'stars_sortby' celebrities_id=i.celebrities.id %}" class="text-decoration-none text-dark">
+                <div class="card shadow-sm card-custom" style="width: 18rem;"> <!-- กำหนดความกว้างที่นี่ -->
+                    
+                    <!-- Use img-top class for better placement -->
+                    {% if not i.celebrities.imageurl %}
+                        <img src="{% static 'default-image.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ i.celebrities.imageurl.url }}" class="card-img-top" alt="{{ i.celebrities.name }}" style="height: 200px; object-fit: cover;">
+                    {% endif %}
+
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ i.celebrities.nickname }}</h5>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="m-3">
+                <h1>no where</h1>
+            </div>
+        {% endif %}
+        </div>
+
+    </section>
+
+
+    <section class="d-flex flex-column align-items-center m-3 border-top">
+
+        <div class="container mt-5 mb-3 d-flex justify-content-center">
+            <h3>Comments</h3>
+        </div>
+        <div class="container mt-4">
+            <form enctype="multipart/form-data" method="post" class="mb-3">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="id_comment_text" class="form-label">Add a comment</label>
+                    {{ form.comment_text }}
+                </div>
+
+                <div>
+                    <p class="mt-3 mb-1">Rating</p>
+                    
+                    <!-- ใช้โครงสร้างใหม่นี้สำหรับ Star Rating -->
+                    <div class="star-rating">
+                        {% for radio in form.rating %}
+                            {{ radio.tag }} <!-- input radio ที่ถูกซ่อน -->
+                            <label for="{{ radio.id_for_label }}"></label> <!-- label ที่จะกลายเป็นดาว (ไม่ต้องมีข้อความ) -->
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <br>
+                <button type="submit" class="btn btn-custom" style="background-color: #FFBC00;">Post Comment</button>
+            </form>
+
+            <div class="mt-5">
+                <h5>Recent Comments</h5>
+                <div class="list-group">
+                    {% for c in allcomments %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <!-- รูป + username -->
+                            <div class="d-flex align-items-center gap-2">
+                            <!-- รูปโปรไฟล์ -->
+                            {% if c.user.users.imageurl %} 
+                                <img src="{{ c.user.users.imageurl }}" alt="Profile" class="rounded-circle img-fluid border object-fit-cover" style="max-width: 50px; aspect-ratio: 1/1;"> 
+                            {% else %}
+                                <img src="{% static 'default-profile.png' %}" alt="Profile" class="rounded-circle img-fluid border object-fit-cover" style="max-width: 50px; aspect-ratio: 1/1;"> 
+                            {% endif %}
+                            <!-- username -->
+                                <h6 class="mb-1"><a href="{% url 'profile_share' username=c.user.username %}" class="text-decoration-none">{{c.user.username}}</a></h6>
+                                <small class="text-muted">{{ c.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-1">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= c.rating %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                {% else %}
+                                    <i class="bi bi-star text-warning"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <p class="mb-1">{{c.comment_text}}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
+{{ place_data|json_script:"place_data" }}
+<script>
+    const suggestionsData = JSON.parse(document.getElementById('place_data').textContent);
+
+    let suggestions = suggestionsData;
+
+    // ดึง element ที่เราจะใช้งานมาเก็บในตัวแปร
+    const searchInput = document.getElementById('searchInput');
+    const resultsContainer = document.getElementById('searchResults');
+
+    console.log('suggestions:', suggestions)
+    let selectedSuggestion = null;
+
+    // 3. Event Listener สำหรับการ "พิมพ์" (ฉบับแก้ไข)
+    searchInput.addEventListener('input', function() {
+        selectedSuggestion = null;
+        const inputValue = this.value.toLowerCase();
+        resultsContainer.innerHTML = '';
+
+        if (inputValue.length > 0) {
+            // --- แก้ไขจุดที่ 1 ---
+            // กรองข้อมูลโดยเข้าถึง suggestion.name
+            const filteredSuggestions = suggestions.filter(suggestion =>
+                suggestion.name.toLowerCase().includes(inputValue)
+            );
+
+            if (filteredSuggestions.length > 0) {
+                filteredSuggestions.forEach(item => {
+                    // 'item' คือ {id: ..., name: ...}
+                    const link = document.createElement('a');
+                    link.href = `/places/${item.id}/`;
+                    link.className = 'list-group-item list-group-item-action';
+
+                    // --- แก้ไขจุดที่ 2 ---
+                    // แสดงผลโดยเข้าถึง item.name
+                    link.textContent = item.name;
+
+                    link.addEventListener('click', function(event) {
+                        // event.preventDefault();
+                        searchInput.value = item.name;
+                        selectedSuggestion = item;
+                        resultsContainer.innerHTML = '';
+                    });
+
+                    resultsContainer.appendChild(link);
+                });
+            } 
+        }
+    });
+
+</script>
+</html>

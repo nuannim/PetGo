@@ -1,0 +1,22 @@
+{% load static %}
+
+<!-- <div class="nav flex-column nav-pills">
+    <a href="{% url 'profile_edit' %}" class="nav-link active fs-5 mb-2">Edit Profile</a>
+    <a href="{% url 'profile_changepassword' %}" class="nav-link text-dark fs-5 mb-2">Change Password</a>
+    <a href="{% url 'profile_deleteaccount' %}" class="nav-link text-dark fs-5 mb-2">Delete Account</a>
+</div> -->
+
+
+<!-- ไฟล์ partials/settings_nav.html ที่ฉลาดขึ้น -->
+
+<div class="nav flex-column nav-pills">
+    <a href="{% url 'profile_edit' %}" class="nav-link fs-5 mb-2 {% if active_page == 'profile_edit' %}active{% else %}text-dark{% endif %}">
+        Edit Profile
+    </a>
+    <a href="{% url 'profile_changepassword' %}" class="nav-link fs-5 mb-2 {% if active_page == 'profile_changepassword' %}active{% else %}text-dark{% endif %}">
+        Change Password
+    </a>
+    <a href="{% url 'profile_deleteaccount' %}" class="nav-link fs-5 mb-2 {% if active_page == 'profile_deleteaccount' %}active{% else %}text-dark{% endif %}">
+        Delete Account
+    </a>
+</div>

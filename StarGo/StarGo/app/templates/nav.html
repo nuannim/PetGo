@@ -1,0 +1,59 @@
+{% load static %}
+
+<header>
+    <nav class="navbar navbar-expand-lg fixed-top" style="background-color: #FFBC00;">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a href="{% url 'index' %}" class="d-none d-lg-block">
+                <img src="{% static 'main-stargo-icon.svg' %}" alt="stargologo" width="200vw">
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item fs-3 ms-4">
+                        <a href="{% url 'places' %}" class="nav-link">Places</a>
+                    </li>
+                    <li class="nav-item fs-3 ms-4">
+                        <a href="{% url 'stars' %}" class="nav-link">Pets</a>
+                    </li>
+                    <!-- Mobile only profile links -->
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i>Your profile</a>
+                    </li>
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" href="{% url 'profile_edit' %}"><i class="bi bi-gear me-2"></i>Settings</a>
+                    </li>
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" href="{% url 'logoutpage' %}"><i class="bi bi-box-arrow-right me-2"></i>Log out</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- <a href="/StarGo/app/templates/profile.html">
+                <img src="\static\test_profile.png" alt="stargologo" width="50vw">
+            </a> -->
+
+            <!-- * dropdown ของ profile ขวาบน -->
+            <div class="dropdown d-none d-lg-block">
+                <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% if user.users.imageurl %}
+                    {% if request_user_image %}
+                    <img src="{{ request_user_image.url }}" alt="stargologo" width="50vw" height="50vw" class="rounded-circle object-fit-cover">
+                    {% else %}
+                    <img src="{{ user.users.imageurl.url }}" alt="stargologo" width="50vw" height="50vw" class="rounded-circle object-fit-cover">
+                    {% endif %}
+                    {% else %}
+                    <img src="{% static 'default-profile.png' %}" alt="stargologo" width="50vw" height="50vw" class="rounded-circle object-fit-cover">
+                    {% endif %}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i>Your profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'profile_edit' %}"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logoutpage' %}"><i class="bi bi-box-arrow-right me-2"></i>Log out</a></li>
+                </ul>
+            </div>
+
+        </div>
+    </nav>
+</header>

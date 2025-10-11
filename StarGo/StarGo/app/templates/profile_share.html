@@ -1,0 +1,169 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - StarGO</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body class="pt-5 bg-light">
+    {% if perms.app.delete_celebrities %}
+        {% include 'nav_admin.html' %}
+    {% else %}
+        {% include 'nav.html' %}
+    {% endif %}
+
+    <section class="container py-4 my-5">
+        <div class="row g-4">
+            <!-- Left Sidebar - Profile Information -->
+            <div class="col-md-3">
+                <div class="d-flex flex-column align-items-center text-center">
+                    <!-- Profile Image -->
+                    {% if users.imageurl %}
+                    <img src="{{ users.imageurl.url }}" alt="Profile" class="rounded-circle img-fluid border object-fit-cover" style="max-width: 260px; aspect-ratio: 1/1;">
+                    {% else %}
+                    <img src="{% static 'default-profile.png' %}" alt="Profile" class="rounded-circle img-fluid border object-fit-cover" style="max-width: 260px; aspect-ratio: 1/1;">
+                    {% endif %}
+
+                    <!-- Name and Username -->
+                    <h1 class="h3 mt-3 mb-1">{{auth_user.first_name}} {{auth_user.last_name}}</h1>
+                    <div class="text-secondary fs-5 mb-3">{{ auth_user.username }}</div>
+
+                    <!-- Edit Profile Button -->
+                    <!-- <a href="{% url 'profile_edit' %}" class="btn btn-warning w-100 fw-medium">Edit profile</a> -->
+                </div>
+            </div>
+
+            <!-- Right Content - Categories -->
+            <div class="col-md-9">
+                <!-- your pets section -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between pb-2 mb-3 border-bottom">
+                        <h2 class="h5 fw-bold mb-0">Your Pets</h2>
+                        <a href="{% url 'stars_addnewstar' %}" class="btn btn-dark ms-3">Add your pet</a>
+                    </div>
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+                        <div class="d-flex flex-row gap-3 justify-content-start p-3 w-100 hide-scrollbar" style="overflow-x: scroll;">
+                            {% for pet in yourpets %}
+                            <!-- Card with a fixed width -->
+                            <a href="{% url 'stars_sortby' celebrities_id=pet.id %}" class="text-decoration-none text-dark">
+                                <div class="card shadow-sm" style="width: 14rem;"> <!-- กำหนดความกว้างที่นี่ -->
+                                    
+                                    <!-- Use img-top class for better placement -->
+                                    {% if not pet.imageurl %}
+                                        <img src="{% static 'default-profile.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="{{ pet.imageurl.url }}" class="card-img-top" alt="{{ pet.nickname }}" style="height: 200px; object-fit: cover;">
+                                    {% endif %}
+
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">{{ pet.nickname }}</h5>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Celebs Section -->
+                <div class="mb-4">
+                    <h2 class="h5 fw-bold pb-2 mb-3 border-bottom">Celebs you added</h2>
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+                        <div class="d-flex flex-row gap-3 justify-content-start p-3 w-100" style="overflow-x: scroll;">
+                            {% for celeb in celebrities %}
+                            <!-- Card with a fixed width -->
+                            <a href="{% url 'stars_sortby' celebrities_id=celeb.id %}" class="text-decoration-none text-dark">
+                                <div class="card shadow-sm" style="width: 14rem;"> <!-- กำหนดความกว้างที่นี่ -->
+                                    <!-- Use img-top class for better placement -->
+                                    {% if celeb.imageurl %}
+                                        {% if celeb.imageurl %}
+                                        <img src="{{ celeb.imageurl.url }}" class="card-img-top" alt="{{ celeb.nickname }}" style="height: 200px; object-fit: cover;">
+                                        {% else %}
+                                        <img src="{% static 'default-profile.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
+                                        {% endif %}
+                                    {% else %}
+                                        <img src="{% static 'default-profile.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
+                                    {% endif %}
+
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">{{ celeb.nickname }}</h5>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Places Section -->
+                <div class="mb-4">
+                    <h2 class="h5 fw-bold pb-2 mb-3 border-bottom">Places you added</h2>
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+                        <div class="d-flex flex-row gap-3 justify-content-start p-3 w-100 hide-scrollbar" style="overflow-x: scroll;">
+                            {% for place in places %}
+                            <!-- Card with a fixed width -->
+                            <a href="{% url 'places_sortby' places_id=place.id %}" class="text-decoration-none text-dark">
+                                <div class="card shadow-sm" style="width: 14rem;"> <!-- กำหนดความกว้างที่นี่ -->
+                                    <!-- Use img-top class for better placement -->
+                                    {% if not place.imageurl %}
+                                        <img src="{% static 'default-profile.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="{{ place.imageurl.url }}" class="card-img-top" alt="{{ place.name }}" style="height: 200px; object-fit: cover;">
+                                    {% endif %}
+
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">{{ place.name }}</h5>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+        
+                </div>
+
+                <!-- Sightings Section -->
+                <div class="mb-4">
+                    <h2 class="h5 fw-bold pb-2 mb-3 border-bottom">Sightings you added</h2>
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+                        <div class="d-flex flex-row gap-3 justify-content-start p-3 w-100 hide-scrollbar" style="overflow-x: scroll;">
+                            {% for sight in sightings %}
+                            <!-- Card with a fixed width -->
+                            <a href="{% url 'sightings_edit' sightings_id=sight.id %}" class="text-decoration-none text-dark">
+                                <div class="card shadow-sm" style="width: 14rem;"> <!-- กำหนดความกว้างที่นี่ -->
+                                    <!-- Use img-top class for better placement -->
+                                    {% if not sight.places.imageurl %}
+                                        <img src="{% static 'default-profile.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="{{ sight.places.imageurl.url }}" class="card-img-top" alt="{{ sight.places.name }}" style="height: 200px; object-fit: cover;">
+                                    {% endif %}
+
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">{{ sight }}</h5>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
+    
+
+</body>
+
+</html>
+

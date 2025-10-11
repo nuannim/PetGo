@@ -1,0 +1,144 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    {% if perms.app.delete_celebrities %}
+        {% include 'nav_admin.html' %}
+    {% else %}
+        {% include 'nav.html' %}
+    {% endif %}
+    
+    <section class="d-flex flex-column justify-content-center" style="border: none solid orange; height: 95vh; margin: 1%;">
+        <div class="container d-flex flex-column align-items-center position-relative">
+        <!-- <div class="container d-flex flex-column align-items-center" style="border: 1px solid black;"> -->
+            <h1>Search pet stars</h1>
+            <div class="input-group input-group-lg m-5" style="width: 50vw;">
+                <span class="input-group-text border-0" id="basic-addon1" style="background-color: #FFBC00; border-radius: 0%; ">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input id="searchInput" type="text" class="form-control border-0" placeholder="" style="background-color: #FFBC00; border-radius: 0%;">
+                <div id="searchResults" class="list-group position-absolute w-100 mt-5"></div>
+            </div>
+            <p>Stars not found? <a href="{% url 'stars_addnewstar' %}" style="color: #ffaa00;" class="">add here</a></p>
+        
+        </div>
+    </section>
+
+    <section class="d-flex flex-column align-items-center border-top" style="height: 95vh; margin: 1%;">
+        <h1 class="m-5">All places</h1>
+
+        <!-- Container for cards with scrolling -->
+        <div class="d-flex flex-row gap-3 flex-wrap justify-content-center p-3" style="overflow-y: auto;">
+
+            {% for place in places %}
+            <!-- Card with a fixed width -->
+            <a href="{% url 'places_sortby' places_id=place.id %}" class="text-decoration-none text-dark">
+                <div class="card shadow-sm" style="width: 18rem;"> <!-- กำหนดความกว้างที่นี่ -->
+                    
+                    <!-- Use img-top class for better placement -->
+                    {% if place.imageurl %}
+                        <img src="{{ place.imageurl }}" class="card-img-top" alt="{{ place.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'default-image.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
+                    {% endif %}
+
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ place.name }}</h5>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
+{{ star_data|json_script:"star_data" }}
+<!-- * star_data อันแรก มาจากที่ views.py ส่งมา อันหลังคือ id เชื่อมกับ getElementById ข้างล่าง -->
+
+<script>
+    const suggestionsData = JSON.parse(document.getElementById('star_data').textContent);
+
+    // ข้อมูลสมมติ
+    // const suggestions = [
+    //     'Elon Musk', 
+    //     'Emma Watson', 
+    //     'Bill Gates', 
+    //     'Taylor Swift',
+    //     'Dwayne Johnson', 
+    //     'Leonardo DiCaprio', 
+    //     'Ariana Grande',
+    //     'Jeff Bezos', 
+    //     'Tom Hanks'
+    // ];
+    // let suggestions = []
+    let suggestions = suggestionsData;
+
+    // ดึง element ที่เราจะใช้งานมาเก็บในตัวแปร
+    const searchInput = document.getElementById('searchInput');
+    const resultsContainer = document.getElementById('searchResults');
+
+    // * ใช้ fetch สำหรับ ดึงข้อมูลมาขึ้นในแถบ search suggestions
+    // fetch('/stars/api/get_stars_data/')
+    //     .then(response=>response.json())
+    //     .then(data => {
+    //         suggestions = data;
+    //         console.log("suggesstions loaded leaw krubbb")
+    //     })
+    //     .catch(error => console.error('error from fetching:', e))
+
+    console.log('suggestions:', suggestions)
+    let selectedSuggestion = null;
+
+    // 3. Event Listener สำหรับการ "พิมพ์" (ฉบับแก้ไข)
+    searchInput.addEventListener('input', function() {
+        selectedSuggestion = null;
+        const inputValue = this.value.toLowerCase();
+        resultsContainer.innerHTML = '';
+
+        if (inputValue.length > 0) {
+            // --- แก้ไขจุดที่ 1 ---
+            // กรองข้อมูลโดยเข้าถึง suggestion.name
+            const filteredSuggestions = suggestions.filter(suggestion =>
+                suggestion.name.toLowerCase().includes(inputValue)
+            );
+
+            if (filteredSuggestions.length > 0) {
+                filteredSuggestions.forEach(item => {
+                    // 'item' คือ {id: ..., name: ...}
+                    const link = document.createElement('a');
+                    link.href = `/stars/${item.id}/`;
+                    link.className = 'list-group-item list-group-item-action';
+
+                    // --- แก้ไขจุดที่ 2 ---
+                    // แสดงผลโดยเข้าถึง item.name
+                    link.textContent = item.name;
+
+                    link.addEventListener('click', function(event) {
+                        // event.preventDefault();
+                        searchInput.value = item.name;
+                        selectedSuggestion = item;
+                        resultsContainer.innerHTML = '';
+                    });
+
+                    resultsContainer.appendChild(link);
+                });
+            } 
+        }
+    });
+
+</script>
+</html>

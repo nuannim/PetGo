@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  storage-service:
+    build: .
+    container_name: storage-microservice
+    volumes:
+      - ./storage_microservice:/app/storage_microservice
+      - media_data:/app/media
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=your-secret-key-change-in-production
+
+volumes:
+  media_data:
+    driver: local
