@@ -101,15 +101,18 @@ def ensure_image_url(obj):
         obj.imageurl = URLHolder(_to_public_path(val))
         return
 
-    # FieldFile-like object: check .name for an absolute URL
+    # FieldFile-like object: only use .name when it appears to be an absolute URL
+    # Otherwise prefer .url so MEDIA_URL is preserved (e.g. '/media/images/...').
     try:
         name = getattr(val, 'name', None)
-        if isinstance(name, str):
+        if isinstance(name, str) and (
+            name.startswith('http://') or name.startswith('https://') or
+            name.startswith('/media/http') or name.startswith('media/http')
+        ):
             obj.imageurl = URLHolder(_to_public_path(name))
-            # Stop here to avoid overriding with FieldFile.url that may percent-encode
             return
     except Exception:
-        return
+        pass
 
     # FieldFile may expose .url; use it if present
     try:

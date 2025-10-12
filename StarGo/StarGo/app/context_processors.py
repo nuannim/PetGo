@@ -50,18 +50,21 @@ def _to_url_holder(val):
     # If it's a URL string or a media path
     if isinstance(val, str):
         return URLHolder(_to_public_path(val))
-    # FieldFile-like
-    try:
-        name = getattr(val, 'name', None)
-        if isinstance(name, str):
-            return URLHolder(_to_public_path(name))
-    except Exception:
-        return None
-    # Some FieldFile expose .url; use it if available
+    # Some FieldFile expose .url; prefer it so MEDIA_URL is preserved
     try:
         url = getattr(val, 'url', None)
         if isinstance(url, str):
             return URLHolder(_to_public_path(url))
+    except Exception:
+        pass
+    # FieldFile-like: only use .name when it's an absolute URL
+    try:
+        name = getattr(val, 'name', None)
+        if isinstance(name, str) and (
+            name.startswith('http://') or name.startswith('https://') or
+            name.startswith('/media/http') or name.startswith('media/http')
+        ):
+            return URLHolder(_to_public_path(name))
     except Exception:
         return None
     return None
