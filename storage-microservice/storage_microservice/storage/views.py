@@ -19,12 +19,12 @@ from django.core.files.base import ContentFile
 @api_view(['GET'])
 def download_image_by_filename(request, filename):
     """API endpoint for downloading an image by path (/images/filename.ext)"""
-    # ตัด /images/ ออก ถ้ามี
-    if filename.startswith('images/'):
-        filename = filename[len('images/'):]
-    elif filename.startswith('/images/'):
-        filename = filename[len('/images/'):]
-    file_path = os.path.join(settings.MEDIA_ROOT, 'images', filename)
+    # ตัด prefix โฟลเดอร์ออก (รองรับทั้ง images/ และ image/)
+    for prefix in ('images/', '/images/', 'image/', '/image/'):
+        if filename.startswith(prefix):
+            filename = filename[len(prefix):]
+            break
+    file_path = os.path.join(settings.MEDIA_ROOT, 'image', filename)
     if not os.path.exists(file_path):
         return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
     with open(file_path, 'rb') as f:
@@ -145,12 +145,12 @@ def delete_image(request, filename):
         img.delete()
         return Response({'message': 'Image deleted successfully'}, status=status.HTTP_200_OK)
     except Exception:
-        # Fallback: try to delete by filename path under media/images
+        # Fallback: try to delete by filename path under media/image
         name = filename
-        if name.startswith('images/'):
-            name = name[len('images/'):]
-        elif name.startswith('/images/'):
-            name = name[len('/images/'):]
+        for prefix in ('images/', '/images/', 'image/', '/image/'):
+            if name.startswith(prefix):
+                name = name[len(prefix):]
+                break
 
         # Try DB lookup by file name
         try:
@@ -163,7 +163,7 @@ def delete_image(request, filename):
         except Exception:
             pass
 
-        file_path = os.path.join(settings.MEDIA_ROOT, 'images', name)
+        file_path = os.path.join(settings.MEDIA_ROOT, 'image', name)
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
