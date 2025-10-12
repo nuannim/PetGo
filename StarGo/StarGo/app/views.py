@@ -31,12 +31,6 @@ if '/api' not in STORAGE_API_URL:
 else:
     STORAGE_API_BASE = STORAGE_API_URL
 
-# Public base (host) for storage service, used to build absolute media URLs
-if STORAGE_API_BASE.endswith('/api'):
-    STORAGE_PUBLIC_BASE = STORAGE_API_BASE[:-4]
-else:
-    STORAGE_PUBLIC_BASE = STORAGE_API_BASE
-
 # Create your views here.
 def index(request):
     return render(request, 'index.html')
@@ -104,11 +98,6 @@ def ensure_image_url(obj):
 
     # If it's a plain string (unlikely for FieldFile access, but handle it)
     if isinstance(val, str):
-        # When value is a relative storage path like 'images/<name>', build absolute URL to storage
-        if val.startswith('images/') or val.startswith('/images/'):
-            rel = val[1:] if val.startswith('/') else val
-            obj.imageurl = URLHolder(f"{STORAGE_PUBLIC_BASE}/media/{rel}")
-            return
         obj.imageurl = URLHolder(_to_public_path(val))
         return
 
@@ -116,19 +105,12 @@ def ensure_image_url(obj):
     # Otherwise prefer .url so MEDIA_URL is preserved (e.g. '/media/images/...').
     try:
         name = getattr(val, 'name', None)
-        if isinstance(name, str):
-            # Absolute URL stored in name (legacy cases)
-            if (
-                name.startswith('http://') or name.startswith('https://') or
-                name.startswith('/media/http') or name.startswith('media/http')
-            ):
-                obj.imageurl = URLHolder(_to_public_path(name))
-                return
-            # Relative storage path like 'images/<name>' -> build absolute to storage
-            if name.startswith('images/') or name.startswith('/images/'):
-                rel = name[1:] if name.startswith('/') else name
-                obj.imageurl = URLHolder(f"{STORAGE_PUBLIC_BASE}/media/{rel}")
-                return
+        if isinstance(name, str) and (
+            name.startswith('http://') or name.startswith('https://') or
+            name.startswith('/media/http') or name.startswith('media/http')
+        ):
+            obj.imageurl = URLHolder(_to_public_path(name))
+            return
     except Exception:
         pass
 
@@ -140,12 +122,7 @@ def ensure_image_url(obj):
             if parsed.scheme in ('http', 'https'):
                 obj.imageurl = URLHolder(url)
             else:
-                # For '/media/images/<name>' use storage host so browser hits correct service
-                if url.startswith('/media/images/') or url.startswith('media/images/'):
-                    path_only = url if url.startswith('/') else '/' + url
-                    obj.imageurl = URLHolder(f"{STORAGE_PUBLIC_BASE}{path_only}")
-                else:
-                    obj.imageurl = URLHolder(_to_public_path(url))
+                obj.imageurl = URLHolder(_to_public_path(url))
     except Exception:
         return
 
