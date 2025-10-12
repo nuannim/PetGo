@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -15,7 +15,9 @@ RUN apt-get update && \
 
 # Install Python deps
 COPY ./requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Upgrade pip/setuptools/wheel to avoid resolver issues, prefer binaries
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --prefer-binary -r /app/requirements.txt
 
 # Copy storage microservice source
 COPY ./storage_microservice /app
