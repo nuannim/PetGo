@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -10,7 +10,9 @@ RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /va
 
 # Install Python deps
 COPY ./StarGo/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Upgrade pip/setuptools/wheel and prefer binary wheels for faster installs
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --prefer-binary -r /app/requirements.txt
 
 # Copy app source
 COPY ./StarGo /app
