@@ -660,7 +660,7 @@ def profile_edit(request):
                     except Exception:
                         path = name
                     # Normalize to filename
-                    for prefix in ('/media/', 'media/', '/images/', 'images/', '/image/', 'image/'):
+                    for prefix in ('/media/', 'media/', '/images/', 'images/'):
                         if path.startswith(prefix):
                             path = path[len(prefix):]
                     filename = path.split('/')[-1]

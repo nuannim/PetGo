@@ -6,7 +6,7 @@ def image_upload_path(instance, filename):
     """Generate unique path for uploaded images"""
     ext = filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
-    return os.path.join('image', filename)
+    return os.path.join('images', filename)
 
 class Image(models.Model):
     """Model for storing image metadata"""
