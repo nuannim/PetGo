@@ -36,18 +36,12 @@
         </div>
     </section>
 
-    <section class="d-flex flex-column align-items-center border-top" style="height: 95vh; margin: 1%;">
+    <!-- <section class="d-flex flex-column align-items-center border-top" style="height: 95vh; margin: 1%;">
         <h1 class="m-5">All places</h1>
-
-        <!-- Container for cards with scrolling -->
         <div class="d-flex flex-row gap-3 flex-wrap justify-content-center p-3" style="overflow-y: auto;">
-
             {% for place in places %}
-            <!-- Card with a fixed width -->
             <a href="{% url 'places_sortby' places_id=place.id %}" class="text-decoration-none text-dark">
-                <div class="card shadow-sm" style="width: 18rem;"> <!-- กำหนดความกว้างที่นี่ -->
-                    
-                    <!-- Use img-top class for better placement -->
+                <div class="card shadow-sm" style="width: 18rem;">
                     {% if place.imageurl %}
                         <img src="{{ place.imageurl }}" class="card-img-top" alt="{{ place.name }}" style="height: 200px; object-fit: cover;">
                     {% else %}
@@ -61,7 +55,7 @@
             </a>
             {% endfor %}
         </div>
-    </section>
+    </section> -->  
 
 </body>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
