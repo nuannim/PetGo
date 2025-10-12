@@ -66,6 +66,26 @@ def ensure_image_url(obj):
         if not u:
             return u
         try:
+            # Case 1: '/media/http%3A/...' -> decode then use path
+            if isinstance(u, str) and u.startswith('/media/') and '%3A' in u:
+                from urllib.parse import unquote
+                decoded = unquote(u[len('/media/'):])
+                parsed = urlparse(decoded)
+                if parsed.scheme in ('http', 'https') and parsed.path:
+                    return parsed.path
+            # Case 2: '/media/http://...' or '/media/https://...' -> strip '/media/' then use path
+            if isinstance(u, str) and (u.startswith('/media/http://') or u.startswith('/media/https://')):
+                inner = u[len('/media/'):]
+                parsed = urlparse(inner)
+                if parsed.scheme in ('http', 'https') and parsed.path:
+                    return parsed.path
+            # Case 3: 'media/http://...' or 'media/https://...' -> normalize then use path
+            if isinstance(u, str) and (u.startswith('media/http://') or u.startswith('media/https://')):
+                inner = '/' + u  # ensure leading slash
+                inner = inner[len('/media/'):]
+                parsed = urlparse(inner)
+                if parsed.scheme in ('http', 'https') and parsed.path:
+                    return parsed.path
             # If already a public path
             if isinstance(u, str) and (u.startswith('/media/') or u.startswith('media/')):
                 return u if u.startswith('/') else '/' + u
@@ -86,6 +106,8 @@ def ensure_image_url(obj):
         name = getattr(val, 'name', None)
         if isinstance(name, str):
             obj.imageurl = URLHolder(_to_public_path(name))
+            # Stop here to avoid overriding with FieldFile.url that may percent-encode
+            return
     except Exception:
         return
 
@@ -93,7 +115,11 @@ def ensure_image_url(obj):
     try:
         url = getattr(val, 'url', None)
         if isinstance(url, str):
-            obj.imageurl = URLHolder(_to_public_path(url))
+            parsed = urlparse(url)
+            if parsed.scheme in ('http', 'https'):
+                obj.imageurl = URLHolder(url)
+            else:
+                obj.imageurl = URLHolder(_to_public_path(url))
     except Exception:
         return
 
@@ -290,8 +316,8 @@ def stars_addnewstar(request):
                         files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
                         response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
                         if response.status_code == 201:
-                            # Save the image URL from the microservice
-                            celebrity.imageurl = response.json().get('url')
+                            # Save storage 'filename' (path under media/) to FileField
+                            celebrity.imageurl = response.json().get('filename')
                         else:
                             # Handle upload error
                             messages.error(request, f"Failed to upload image: {response.text}")
@@ -428,8 +454,8 @@ def places_addnewplace(request):
                         files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
                         response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
                         if response.status_code == 201:
-                            # Save the image URL from the microservice
-                            place.imageurl = response.json().get('url')
+                            # Save storage 'filename' (path under media/) to FileField to avoid '/media/http%3A/...'
+                            place.imageurl = response.json().get('filename')
                         else:
                             # Handle upload error
                             messages.error(request, f"Failed to upload image: {response.text}")
@@ -653,8 +679,8 @@ def profile_edit(request):
                         files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
                         response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
                         if response.status_code == 201:
-                            # Save the image URL from the microservice
-                            users.imageurl = response.json().get('url')
+                            # Save storage 'filename' (path under media/) to FileField
+                            users.imageurl = response.json().get('filename')
                         else:
                             # Handle upload error
                             messages.error(request, f"Failed to upload image: {response.text}")
