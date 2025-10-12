@@ -100,23 +100,35 @@ def ensure_image_url(obj):
     # Helper: ensure the URL is actually served. If it points to /media but the file
     # is not present in this app's MEDIA_ROOT (dev), rewrite to absolute storage URL.
     def _ensure_served_url(u: str) -> str:
-        """Return a URL that will be served.
-        Keep '/media/...' paths by default. Only rewrite to remote storage
-        when ENABLE_STORAGE_PROXY env is set and local file is missing.
-        Avoid NameError and broken images when storage is not running.
+        """Return a URL that will be served without mixed-content issues.
+        Prefer public '/media/...' paths (served by Nginx). If MEDIA_PUBLIC_BASE_URL
+        is provided, build absolute URLs with that base to match HTTPS.
         """
         try:
-            if isinstance(u, str) and (u.startswith('/media/') or u.startswith('media/')):
+            if not isinstance(u, str):
+                return u
+
+            media_public_base = os.environ.get("MEDIA_PUBLIC_BASE_URL", "").rstrip('/')
+
+            # Already a /media relative path
+            if u.startswith('/media/') or u.startswith('media/'):
                 path = u if u.startswith('/') else '/' + u
-                rel = path[len('/media/'):]
-                local_path = os.path.join(settings.MEDIA_ROOT, rel.replace('/', os.sep))
-                enable_proxy = os.environ.get("ENABLE_STORAGE_PROXY", "").lower() in ("1", "true", "yes")
-                storage_base = os.environ.get("STORAGE_API_URL", "").rstrip('/')
-                if enable_proxy and storage_base and not os.path.exists(local_path):
-                    return f"{storage_base}{path}"
+                if media_public_base:
+                    return f"{media_public_base}{path}"
+                return path
+
+            # Absolute URL: if it contains /media/, convert to public media path
+            parsed = urlparse(u)
+            if parsed.scheme in ('http', 'https'):
+                if '/media/' in parsed.path:
+                    path = parsed.path[parsed.path.find('/media/') :]
+                    if media_public_base:
+                        return f"{media_public_base}{path}"
+                    return path
+
+            return u
         except Exception:
-            pass
-        return u
+            return u
 
     # If it's a plain string (unlikely for FieldFile access, but handle it)
     if isinstance(val, str):
