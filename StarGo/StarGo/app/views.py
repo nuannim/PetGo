@@ -355,18 +355,10 @@ def stars_addnewstar(request):
                     if request.POST.get('is_pet'):
                         celebrity.owner = myuser
 
-                    # Handle image upload to storage-microservice
+                    # Handle image upload locally: save into FileField under MEDIA_ROOT
                     if 'imageurl' in request.FILES:
                         image_file = request.FILES['imageurl']
-                        files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
-                        response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
-                        if response.status_code == 201:
-                            # Save storage 'filename' (path under media/) to FileField
-                            celebrity.imageurl = response.json().get('filename')
-                        else:
-                            # Handle upload error
-                            messages.error(request, f"Failed to upload image: {response.text}")
-                            raise Exception("Image upload failed")
+                        celebrity.imageurl.save(image_file.name, image_file, save=False)
                     
                     celebrity.save()
                     
@@ -493,18 +485,10 @@ def places_addnewplace(request):
                     myuser = User.objects.get(username=request.user)
                     place.addby_auth_user = myuser
 
-                    # Handle image upload to storage-microservice
+                    # Handle image upload locally: save into FileField under MEDIA_ROOT
                     if 'imageurl' in request.FILES:
                         image_file = request.FILES['imageurl']
-                        files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
-                        response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
-                        if response.status_code == 201:
-                            # Save storage 'filename' (path under media/) to FileField to avoid '/media/http%3A/...'
-                            place.imageurl = response.json().get('filename')
-                        else:
-                            # Handle upload error
-                            messages.error(request, f"Failed to upload image: {response.text}")
-                            raise Exception("Image upload failed")
+                        place.imageurl.save(image_file.name, image_file, save=False)
 
                     place.save()
 
@@ -674,6 +658,12 @@ def profile_edit(request):
         profileimageform = ProfileImageEditForm(request.POST, request.FILES, instance=users)
 
         if request.POST.get('action') == 'remove_photo' and users.imageurl:
+            # Delete local file first if exists (new uploads)
+            try:
+                if hasattr(users.imageurl, 'delete'):
+                    users.imageurl.delete(save=False)
+            except Exception:
+                pass
             # Extract identifier or filename robustly and call delete API
             try:
                 val = users.imageurl
@@ -718,18 +708,10 @@ def profile_edit(request):
                 with transaction.atomic():
                     profileform.save()
                     
-                    # Handle image upload to storage-microservice
+                    # Handle image upload locally: save into FileField under MEDIA_ROOT
                     if 'imageurl' in request.FILES:
                         image_file = request.FILES['imageurl']
-                        files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
-                        response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
-                        if response.status_code == 201:
-                            # Save storage 'filename' (path under media/) to FileField
-                            users.imageurl = response.json().get('filename')
-                        else:
-                            # Handle upload error
-                            messages.error(request, f"Failed to upload image: {response.text}")
-                            raise Exception("Image upload failed")
+                        users.imageurl.save(image_file.name, image_file, save=False)
                     
                     users.save() # Save the user model with the new image URL
 
