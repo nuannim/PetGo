@@ -30,6 +30,7 @@ services:
       CORS_ALLOWED_ORIGINS: "http://35.240.242.130,http://10.148.0.6"
     volumes:
       - media_data:/app/media
+      - storage_db:/app/db.sqlite3
     expose:
       - "8001"
     networks:
@@ -141,3 +142,4 @@ volumes:
   media_data:
   grafana_data:
   stargo_static:
+  storage_db:
