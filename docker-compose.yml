@@ -127,23 +127,8 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    ports:
-      - "8080:8080"
-    networks:
-      - backend
-
-  jenkins:
-    build: ./jenkins
-    container_name: jenkins
-    user: root
-    ports:
-      - "8080:8080"
-      - "50000:50000"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+    expose:
+      - "8080"
     networks:
       - backend
 
@@ -155,5 +140,4 @@ volumes:
   db_data:
   media_data:
   grafana_data:
-  jenkins_home:
   stargo_static:
