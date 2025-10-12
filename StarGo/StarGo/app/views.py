@@ -61,11 +61,16 @@ def ensure_image_url(obj):
     if isinstance(val, URLHolder):
         return
 
-    # Helper: convert absolute storage URL to path so Nginx /media proxy can serve it
+    # Helper: convert absolute storage URL to a public /media path for Nginx
     def _to_public_path(u: str) -> str:
+        if not u:
+            return u
         try:
+            # If already a public path
+            if isinstance(u, str) and (u.startswith('/media/') or u.startswith('media/')):
+                return u if u.startswith('/') else '/' + u
             parsed = urlparse(u)
-            if parsed.path:
+            if parsed.scheme in ('http', 'https') and parsed.path:
                 return parsed.path
         except Exception:
             pass
@@ -73,15 +78,22 @@ def ensure_image_url(obj):
 
     # If it's a plain string (unlikely for FieldFile access, but handle it)
     if isinstance(val, str):
-        if val.startswith('http://') or val.startswith('https://'):
-            obj.imageurl = URLHolder(_to_public_path(val))
+        obj.imageurl = URLHolder(_to_public_path(val))
         return
 
     # FieldFile-like object: check .name for an absolute URL
     try:
         name = getattr(val, 'name', None)
-        if isinstance(name, str) and (name.startswith('http://') or name.startswith('https://')):
+        if isinstance(name, str):
             obj.imageurl = URLHolder(_to_public_path(name))
+    except Exception:
+        return
+
+    # FieldFile may expose .url; use it if present
+    try:
+        url = getattr(val, 'url', None)
+        if isinstance(url, str):
+            obj.imageurl = URLHolder(_to_public_path(url))
     except Exception:
         return
 

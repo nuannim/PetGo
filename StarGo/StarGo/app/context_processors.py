@@ -1,19 +1,47 @@
+from urllib.parse import urlparse
+
+
 class URLHolder:
     def __init__(self, url):
         self.url = url
 
 
+def _to_public_path(u: str) -> str:
+    """Convert an absolute storage URL to a public path served by Nginx.
+    If input is already a path like /media/... return as-is.
+    """
+    if not u:
+        return u
+    try:
+        # If already a public path
+        if u.startswith('/media/') or u.startswith('media/'):
+            return u if u.startswith('/') else '/' + u
+        parsed = urlparse(u)
+        if parsed.scheme in ('http', 'https') and parsed.path:
+            return parsed.path
+    except Exception:
+        pass
+    return u
+
+
 def _to_url_holder(val):
     if not val:
         return None
-    # If it's already a URL string
-    if isinstance(val, str) and (val.startswith('http://') or val.startswith('https://')):
-        return URLHolder(val)
+    # If it's a URL string or a media path
+    if isinstance(val, str):
+        return URLHolder(_to_public_path(val))
     # FieldFile-like
     try:
         name = getattr(val, 'name', None)
-        if isinstance(name, str) and (name.startswith('http://') or name.startswith('https://')):
-            return URLHolder(name)
+        if isinstance(name, str):
+            return URLHolder(_to_public_path(name))
+    except Exception:
+        return None
+    # Some FieldFile expose .url; use it if available
+    try:
+        url = getattr(val, 'url', None)
+        if isinstance(url, str):
+            return URLHolder(_to_public_path(url))
     except Exception:
         return None
     return None
