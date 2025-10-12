@@ -191,7 +191,7 @@
                             <div class="d-flex align-items-center gap-2">
                             <!-- รูปโปรไฟล์ -->
                             {% if c.user.users.imageurl %} 
-                                <img src="{{ c.user.users.imageurl }}" alt="Profile" class="rounded-circle img-fluid border object-fit-cover" style="max-width: 50px; aspect-ratio: 1/1;"> 
+                                <img src="{{ c.user.users.imageurl.url }}" alt="Profile" class="rounded-circle img-fluid border object-fit-cover" style="max-width: 50px; aspect-ratio: 1/1;"> 
                             {% else %}
                                 <img src="{% static 'default-profile.png' %}" alt="Profile" class="rounded-circle img-fluid border object-fit-cover" style="max-width: 50px; aspect-ratio: 1/1;"> 
                             {% endif %}

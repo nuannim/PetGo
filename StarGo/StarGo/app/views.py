@@ -20,6 +20,7 @@ from .models import *
 import requests
 import os
 from urllib.parse import urlparse
+from django.conf import settings
 
 STORAGE_API_URL = os.environ.get("STORAGE_API_URL", "http://127.0.0.1:8001")
 # Normalize STORAGE API base: ensure it points to the storage app root that contains the API
@@ -96,9 +97,24 @@ def ensure_image_url(obj):
             pass
         return u
 
+    # Helper: ensure the URL is actually served. If it points to /media but the file
+    # is not present in this app's MEDIA_ROOT (dev), rewrite to absolute storage URL.
+    def _ensure_served_url(u: str) -> str:
+        try:
+            if isinstance(u, str) and (u.startswith('/media/') or u.startswith('media/')):
+                path = u if u.startswith('/') else '/' + u
+                rel = path[len('/media/'):]
+                local_path = os.path.join(settings.MEDIA_ROOT, rel.replace('/', os.sep))
+                if not os.path.exists(local_path) and STORAGE_API_URL:
+                    base = STORAGE_API_URL.rstrip('/')
+                    return f"{base}{path}"
+        except Exception:
+            pass
+        return u
+
     # If it's a plain string (unlikely for FieldFile access, but handle it)
     if isinstance(val, str):
-        obj.imageurl = URLHolder(_to_public_path(val))
+        obj.imageurl = URLHolder(_ensure_served_url(_to_public_path(val)))
         return
 
     # FieldFile-like object: only use .name when it appears to be an absolute URL
@@ -109,7 +125,7 @@ def ensure_image_url(obj):
             name.startswith('http://') or name.startswith('https://') or
             name.startswith('/media/http') or name.startswith('media/http')
         ):
-            obj.imageurl = URLHolder(_to_public_path(name))
+            obj.imageurl = URLHolder(_ensure_served_url(_to_public_path(name)))
             return
     except Exception:
         pass
@@ -122,7 +138,7 @@ def ensure_image_url(obj):
             if parsed.scheme in ('http', 'https'):
                 obj.imageurl = URLHolder(url)
             else:
-                obj.imageurl = URLHolder(_to_public_path(url))
+                obj.imageurl = URLHolder(_ensure_served_url(_to_public_path(url)))
     except Exception:
         return
 

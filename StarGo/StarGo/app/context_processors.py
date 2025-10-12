@@ -1,4 +1,6 @@
 from urllib.parse import urlparse
+from django.conf import settings
+import os
 
 
 class URLHolder:
@@ -49,12 +51,12 @@ def _to_url_holder(val):
         return None
     # If it's a URL string or a media path
     if isinstance(val, str):
-        return URLHolder(_to_public_path(val))
+        return URLHolder(_ensure_served_url(_to_public_path(val)))
     # Some FieldFile expose .url; prefer it so MEDIA_URL is preserved
     try:
         url = getattr(val, 'url', None)
         if isinstance(url, str):
-            return URLHolder(_to_public_path(url))
+            return URLHolder(_ensure_served_url(_to_public_path(url)))
     except Exception:
         pass
     # FieldFile-like: only use .name when it's an absolute URL
@@ -64,10 +66,25 @@ def _to_url_holder(val):
             name.startswith('http://') or name.startswith('https://') or
             name.startswith('/media/http') or name.startswith('media/http')
         ):
-            return URLHolder(_to_public_path(name))
+            return URLHolder(_ensure_served_url(_to_public_path(name)))
     except Exception:
         return None
     return None
+
+# Helper: ensure the URL is actually served. If it points to /media but the file
+# is not present in this app's MEDIA_ROOT (dev), rewrite to absolute storage URL.
+def _ensure_served_url(u: str) -> str:
+    try:
+        if isinstance(u, str) and (u.startswith('/media/') or u.startswith('media/')):
+            path = u if u.startswith('/') else '/' + u
+            rel = path[len('/media/'):]
+            local_path = os.path.join(settings.MEDIA_ROOT, rel.replace('/', os.sep))
+            storage_base = os.environ.get("STORAGE_API_URL", "http://127.0.0.1:8001").rstrip('/')
+            if not os.path.exists(local_path) and storage_base:
+                return f"{storage_base}{path}"
+    except Exception:
+        pass
+    return u
 
 
 def ensure_user_image(request):
