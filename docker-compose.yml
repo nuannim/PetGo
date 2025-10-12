@@ -117,20 +117,6 @@ services:
     networks:
       - backend
 
-  alert-relay:
-    build:
-      context: ./alert-relay
-      dockerfile: Dockerfile
-    container_name: alert-relay
-    environment:
-      DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/1426975902751002785/--VsPg-YiTttW64CD96bVK7LUHC6pnJOzPBqyPUDCtbVlhLm1xT-gFcKqw5l4C71CPDE"
-    expose:
-      - "8081"
-    networks:
-      - backend
-    depends_on:
-      - grafana
-
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
