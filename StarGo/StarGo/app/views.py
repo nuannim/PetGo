@@ -20,7 +20,6 @@ from .models import *
 import requests
 import os
 from urllib.parse import urlparse
-from django.conf import settings
 
 STORAGE_API_URL = os.environ.get("STORAGE_API_URL", "http://127.0.0.1:8001")
 # Normalize STORAGE API base: ensure it points to the storage app root that contains the API
@@ -97,42 +96,9 @@ def ensure_image_url(obj):
             pass
         return u
 
-    # Helper: ensure the URL is actually served. If it points to /media but the file
-    # is not present in this app's MEDIA_ROOT (dev), rewrite to absolute storage URL.
-    def _ensure_served_url(u: str) -> str:
-        """Return a URL that will be served without mixed-content issues.
-        Prefer public '/media/...' paths (served by Nginx). If MEDIA_PUBLIC_BASE_URL
-        is provided, build absolute URLs with that base to match HTTPS.
-        """
-        try:
-            if not isinstance(u, str):
-                return u
-
-            media_public_base = os.environ.get("MEDIA_PUBLIC_BASE_URL", "").rstrip('/')
-
-            # Already a /media relative path
-            if u.startswith('/media/') or u.startswith('media/'):
-                path = u if u.startswith('/') else '/' + u
-                if media_public_base:
-                    return f"{media_public_base}{path}"
-                return path
-
-            # Absolute URL: if it contains /media/, convert to public media path
-            parsed = urlparse(u)
-            if parsed.scheme in ('http', 'https'):
-                if '/media/' in parsed.path:
-                    path = parsed.path[parsed.path.find('/media/') :]
-                    if media_public_base:
-                        return f"{media_public_base}{path}"
-                    return path
-
-            return u
-        except Exception:
-            return u
-
     # If it's a plain string (unlikely for FieldFile access, but handle it)
     if isinstance(val, str):
-        obj.imageurl = URLHolder(_ensure_served_url(_to_public_path(val)))
+        obj.imageurl = URLHolder(_to_public_path(val))
         return
 
     # FieldFile-like object: only use .name when it appears to be an absolute URL
@@ -143,7 +109,7 @@ def ensure_image_url(obj):
             name.startswith('http://') or name.startswith('https://') or
             name.startswith('/media/http') or name.startswith('media/http')
         ):
-            obj.imageurl = URLHolder(_ensure_served_url(_to_public_path(name)))
+            obj.imageurl = URLHolder(_to_public_path(name))
             return
     except Exception:
         pass
@@ -156,7 +122,7 @@ def ensure_image_url(obj):
             if parsed.scheme in ('http', 'https'):
                 obj.imageurl = URLHolder(url)
             else:
-                obj.imageurl = URLHolder(_ensure_served_url(_to_public_path(url)))
+                obj.imageurl = URLHolder(_to_public_path(url))
     except Exception:
         return
 
@@ -355,10 +321,18 @@ def stars_addnewstar(request):
                     if request.POST.get('is_pet'):
                         celebrity.owner = myuser
 
-                    # Handle image upload locally: save into FileField under MEDIA_ROOT
+                    # Handle image upload to storage-microservice
                     if 'imageurl' in request.FILES:
                         image_file = request.FILES['imageurl']
-                        celebrity.imageurl.save(image_file.name, image_file, save=False)
+                        files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
+                        response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
+                        if response.status_code == 201:
+                            # Save storage 'filename' (path under media/) to FileField
+                            celebrity.imageurl = response.json().get('filename')
+                        else:
+                            # Handle upload error
+                            messages.error(request, f"Failed to upload image: {response.text}")
+                            raise Exception("Image upload failed")
                     
                     celebrity.save()
                     
@@ -485,10 +459,18 @@ def places_addnewplace(request):
                     myuser = User.objects.get(username=request.user)
                     place.addby_auth_user = myuser
 
-                    # Handle image upload locally: save into FileField under MEDIA_ROOT
+                    # Handle image upload to storage-microservice
                     if 'imageurl' in request.FILES:
                         image_file = request.FILES['imageurl']
-                        place.imageurl.save(image_file.name, image_file, save=False)
+                        files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
+                        response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
+                        if response.status_code == 201:
+                            # Save storage 'filename' (path under media/) to FileField to avoid '/media/http%3A/...'
+                            place.imageurl = response.json().get('filename')
+                        else:
+                            # Handle upload error
+                            messages.error(request, f"Failed to upload image: {response.text}")
+                            raise Exception("Image upload failed")
 
                     place.save()
 
@@ -658,12 +640,6 @@ def profile_edit(request):
         profileimageform = ProfileImageEditForm(request.POST, request.FILES, instance=users)
 
         if request.POST.get('action') == 'remove_photo' and users.imageurl:
-            # Delete local file first if exists (new uploads)
-            try:
-                if hasattr(users.imageurl, 'delete'):
-                    users.imageurl.delete(save=False)
-            except Exception:
-                pass
             # Extract identifier or filename robustly and call delete API
             try:
                 val = users.imageurl
@@ -708,10 +684,18 @@ def profile_edit(request):
                 with transaction.atomic():
                     profileform.save()
                     
-                    # Handle image upload locally: save into FileField under MEDIA_ROOT
+                    # Handle image upload to storage-microservice
                     if 'imageurl' in request.FILES:
                         image_file = request.FILES['imageurl']
-                        users.imageurl.save(image_file.name, image_file, save=False)
+                        files = {'file': (image_file.name, image_file.read(), image_file.content_type)}
+                        response = requests.post(f"{STORAGE_API_BASE}/images/upload/", files=files)
+                        if response.status_code == 201:
+                            # Save storage 'filename' (path under media/) to FileField
+                            users.imageurl = response.json().get('filename')
+                        else:
+                            # Handle upload error
+                            messages.error(request, f"Failed to upload image: {response.text}")
+                            raise Exception("Image upload failed")
                     
                     users.save() # Save the user model with the new image URL
 
