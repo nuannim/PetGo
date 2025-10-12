@@ -269,18 +269,26 @@ def sightings_edit(request, sightings_id):
 
 @login_required
 def stars(request):
-    # Model may not have firstname/lastname; use nickname as the displayed name
+    # Prepare search data using nickname as name
     stars_queryset = Celebrities.objects.annotate(
         name=F('nickname')
     )
-
     star_data = list(stars_queryset.values(
         'id',
         'name',
     ))
 
+    # Fetch celebrities for listing and normalize image URLs for templates
+    celebrities = Celebrities.objects.all()
+    for c in celebrities:
+        try:
+            ensure_image_url(c)
+        except Exception:
+            pass
+
     context = {
-        'star_data': star_data
+        'star_data': star_data,
+        'celebrities': celebrities,
     }
 
     return render(request, 'stars.html', context)
