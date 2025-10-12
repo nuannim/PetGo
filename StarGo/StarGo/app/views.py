@@ -703,7 +703,8 @@ def registerpage(request):
             try:
                 with transaction.atomic():
                     user = form.save()
-                    usergroup = Group.objects.get(name='user')
+                    # Ensure default 'user' group exists; create if missing
+                    usergroup, _ = Group.objects.get_or_create(name='user')
                     user.groups.add(usergroup)
                     
                     Users.objects.create(
@@ -717,6 +718,7 @@ def registerpage(request):
                     return redirect('places')
             except Exception as e:
                 print('views.py - def registerpage():', e)
+                messages.error(request, "Registration failed due to a server error. Please try again.")
         else:
             messages.error(request, "Unsuccessful registration. Invalid information.")
 
