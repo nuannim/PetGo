@@ -1,19 +1,159 @@
-version: '3'
+version: "3.8"
 
 services:
-  storage-service:
-    build: .
-    container_name: storage-microservice
-    volumes:
-      - ./storage_microservice:/app/storage_microservice
-      - media_data:/app/media
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
+  db:
+    image: postgres:15
+    container_name: postgres
     environment:
-      - DEBUG=1
-      - SECRET_KEY=your-secret-key-change-in-production
+      POSTGRES_DB: stargo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  storage:
+    build:
+      context: ./storage-microservice
+      dockerfile: Dockerfile
+    container_name: storage
+    environment:
+      DEBUG: "0"
+      SECRET_KEY: change-me-in-prod
+      ALLOWED_HOSTS: "*"
+      CORS_ALLOWED_ORIGINS: "http://35.240.242.130,http://10.148.0.6"
+    volumes:
+      - media_data:/app/media
+    expose:
+      - "8001"
+    networks:
+      - backend
+    depends_on:
+      - db
+
+  web1:
+    build:
+      context: ./StarGo
+      dockerfile: Dockerfile
+    container_name: stargo-web-1
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: stargo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      ALLOWED_HOSTS: "35.240.242.130,10.148.0.6"
+      STORAGE_API_URL: "http://storage:8001"
+    expose:
+      - "8000"
+    volumes:
+      - stargo_static:/app/staticfiles
+    depends_on:
+      - db
+      - storage
+    networks:
+      - backend
+
+  web2:
+    build:
+      context: ./StarGo
+      dockerfile: Dockerfile
+    container_name: stargo-web-2
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: stargo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      ALLOWED_HOSTS: "35.240.242.130,10.148.0.6"
+      STORAGE_API_URL: "http://storage:8001"
+    expose:
+      - "8000"
+    volumes:
+      - stargo_static:/app/staticfiles
+    depends_on:
+      - db
+      - storage
+    networks:
+      - backend
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx
+    depends_on:
+      - web1
+      - web2
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - stargo_static:/var/www/static:ro
+    networks:
+      - backend
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - backend
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - backend
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+
+  jenkins:
+    build: ./jenkins
+    container_name: jenkins
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
 
 volumes:
+  db_data:
   media_data:
-    driver: local
+  grafana_data:
+  jenkins_home:
+  stargo_static:
