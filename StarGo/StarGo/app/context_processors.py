@@ -36,6 +36,10 @@ def _to_public_path(u: str) -> str:
         # If already a public path
         if u.startswith('/media/') or u.startswith('media/'):
             return u if u.startswith('/') else '/' + u
+        # Normalize 'images/<name>' to '/media/images/<name>'
+        if u.startswith('images/') or u.startswith('/images/'):
+            rel = u[1:] if u.startswith('/') else u
+            return '/media/' + rel
         parsed = urlparse(u)
         if parsed.scheme in ('http', 'https') and parsed.path:
             return parsed.path
