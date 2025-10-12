@@ -241,8 +241,17 @@ def stars(request):
         'name',
     ))
 
+    # Fetch all celebrities and normalize image URLs for templates
+    celebrities = Celebrities.objects.all()
+    for c in celebrities:
+        try:
+            ensure_image_url(c)
+        except Exception:
+            pass
+
     context = {
-        'star_data': star_data
+        'star_data': star_data,
+        'celebrities': celebrities,
     }
 
     return render(request, 'stars.html', context)
