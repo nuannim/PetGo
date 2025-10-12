@@ -29,8 +29,13 @@ services:
       ALLOWED_HOSTS: "*"
       CORS_ALLOWED_ORIGINS: "http://35.240.242.130,http://10.148.0.6,http://localhost,http://127.0.0.1"
     volumes:
+<<<<<<< HEAD
       - media_data:/app/storage_microservice/media
       - storage_db:/app/storage_microservice/db.sqlite3
+=======
+      - media_data:/app/media
+      - storage_db:/app/db.sqlite3
+>>>>>>> parent of d252951 (Improve image deletion logic and storage path handling)
     expose:
       - "8001"
     networks:

@@ -145,32 +145,16 @@ def delete_image(request, filename):
         img.delete()
         return Response({'message': 'Image deleted successfully'}, status=status.HTTP_200_OK)
     except Exception:
-        # Fallback: try to delete by filename path under media/images
-        name = filename
-        if name.startswith('images/'):
-            name = name[len('images/'):]
-        elif name.startswith('/images/'):
-            name = name[len('/images/'):]
-
-        # Try DB lookup by file name
-        try:
-            # Image.file.name usually like 'images/<uuid>/<filename>' or similar
-            img = Image.objects.filter(file__icontains=name).first()
-            if img:
-                img.file.delete(save=False)
-                img.delete()
-                return Response({'message': 'Image deleted successfully'}, status=status.HTTP_200_OK)
-        except Exception:
-            pass
-
-        file_path = os.path.join(settings.MEDIA_ROOT, 'images', name)
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-                return Response({'message': 'Image deleted successfully'}, status=status.HTTP_200_OK)
-            except Exception as e:
-                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        # --- previous filesystem-based logic (commented out) ---
+        # if filename.startswith('images/'):
+        #     filename = filename[len('images/') :]
+        # elif filename.startswith('/images/'):
+        #     filename = filename[len('/images/') :]
+        # file_path = os.path.join(settings.MEDIA_ROOT, 'images', filename)
+        # if not os.path.exists(file_path):
+        #     return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
+        # os.remove(file_path)
+        # return Response({'message': 'Image deleted successfully'}, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid id or image not found'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['GET'])

@@ -652,42 +652,18 @@ def profile_edit(request):
         profileimageform = ProfileImageEditForm(request.POST, request.FILES, instance=users)
 
         if request.POST.get('action') == 'remove_photo' and users.imageurl:
-            # Extract identifier or filename robustly and call delete API
+            # Extract filename from URL and call delete API
             try:
-                val = users.imageurl
-                # Prefer FieldFile.name; otherwise use string directly
-                name = None
-                try:
-                    name = getattr(val, 'name', None)
-                except Exception:
-                    name = None
-                if not name and isinstance(val, str):
-                    name = val
-                # If still falsy, skip deletion
-                if name:
-                    # If it's a full URL, strip to path and filename
-                    try:
-                        parsed = urlparse(name)
-                        path = parsed.path if parsed.scheme in ('http', 'https') else name
-                    except Exception:
-                        path = name
-                    # Normalize to filename
-                    for prefix in ('/media/', 'media/', '/images/', 'images/'):
-                        if path.startswith(prefix):
-                            path = path[len(prefix):]
-                    filename = path.split('/')[-1]
-                    if filename:
-                        response = requests.delete(f"{STORAGE_API_BASE}/images/{filename}/delete/")
-                        if response.status_code not in [200, 204, 404]:  # Allow 404 if file not found
-                            messages.error(request, f"Failed to delete image: {response.text}")
-                            raise Exception("Image deletion failed")
-                else:
-                    print('No image name found for deletion')
+                filename = users.imageurl.split('/')[-1]
+                response = requests.delete(f"{STORAGE_API_BASE}/images/{filename}/delete/")
+                if response.status_code not in [200, 204, 404]: # Allow 404 if file not found
+                    messages.error(request, f"Failed to delete image: {response.text}")
+                    raise Exception("Image deletion failed")
             except Exception as e:
                 print(e)
                 messages.error(request, f"An error occurred while deleting the image: {e}")
             
-            users.imageurl = None  # Or set to a default image URL from microservice
+            users.imageurl = None # Or set to a default image URL from microservice
             users.save()
             return redirect('profile_edit')
 
