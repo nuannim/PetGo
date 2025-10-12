@@ -3,17 +3,39 @@ class URLHolder:
         self.url = url
 
 
+def _to_public_path(u: str) -> str:
+    """Normalize absolute storage URLs to public paths served by Nginx.
+    - http(s)://storage:8001/media/images/xxx -> /media/images/xxx
+    - /images/xxx or images/xxx -> /media/images/xxx
+    - /media/http... (edge cases) -> strip to path
+    """
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(u)
+        if parsed.scheme in ('http', 'https') and parsed.path:
+            u = parsed.path
+    except Exception:
+        pass
+    # normalize images prefix to media/images
+    if isinstance(u, str):
+        if u.startswith('images/'):
+            return '/media/' + u
+        if u.startswith('/images/'):
+            return '/media' + u
+    return u
+
+
 def _to_url_holder(val):
     if not val:
         return None
     # If it's already a URL string
     if isinstance(val, str) and (val.startswith('http://') or val.startswith('https://')):
-        return URLHolder(val)
+        return URLHolder(_to_public_path(val))
     # FieldFile-like
     try:
         name = getattr(val, 'name', None)
         if isinstance(name, str) and (name.startswith('http://') or name.startswith('https://')):
-            return URLHolder(name)
+            return URLHolder(_to_public_path(name))
     except Exception:
         return None
     return None
