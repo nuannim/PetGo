@@ -1,0 +1,124 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: system-health
+    folder: System Health Alerts
+    interval: 1m
+    rules:
+      - uid: high-cpu
+        title: High CPU Usage (Node)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: ${DS_PROMETHEUS}
+            model:
+              expr: "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"
+              legendFormat: "cpu"
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              refId: B
+              conditions:
+                - evaluator:
+                    params:
+                      - 80
+                    type: gt
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+                  query:
+                    refId: A
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 80%"
+      - uid: low-memory
+        title: Low Available Memory (Node)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: ${DS_PROMETHEUS}
+            model:
+              expr: "(node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100"
+              legendFormat: "mem"
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              refId: B
+              conditions:
+                - evaluator:
+                    params:
+                      - 10
+                    type: lt
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+                  query:
+                    refId: A
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Available memory below 10%"
+      - uid: targets-down
+        title: Prometheus Targets Down
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: ${DS_PROMETHEUS}
+            model:
+              expr: "sum(1 - up)"
+              legendFormat: "down"
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              refId: B
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+                  query:
+                    refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "One or more targets are down"

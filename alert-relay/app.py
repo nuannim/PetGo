@@ -4,9 +4,10 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import requests
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
-app = Flask(__name__)
+app = FastAPI()
 
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
@@ -38,13 +39,11 @@ def _format_alert(alert: Dict[str, Any]) -> str:
     if generator:
         parts.append(f"source: {generator}")
 
-    # Include key labels (limit size)
     label_kv = [f"{k}={v}" for k, v in labels.items() if k not in {"alertname", "severity"}]
     if label_kv:
         parts.append("labels: " + ", ".join(label_kv[:6]))
 
     msg = "\n".join(parts)
-    # Discord content limit is ~2000 chars
     return msg[:1900]
 
 
@@ -56,13 +55,12 @@ def _post_to_discord(content: str) -> requests.Response:
     return requests.post(DISCORD_WEBHOOK_URL, data=json.dumps(payload), headers=headers, timeout=10)
 
 
-@app.route("/webhook", methods=["POST"])
-def webhook():
+@app.post("/webhook")
+async def webhook(request: Request):
     try:
-        data = request.get_json(force=True, silent=True) or {}
+        data = await request.json()
         alerts: List[Dict[str, Any]] = data.get("alerts") or data.get("evalMatches") or []
         if not isinstance(alerts, list):
-            # Unified alerting usually sends list under "alerts"
             alerts = [data]
 
         messages = [_format_alert(a) for a in alerts]
@@ -70,16 +68,12 @@ def webhook():
 
         resp = _post_to_discord(content)
         if resp.status_code >= 400:
-            return jsonify({"ok": False, "error": resp.text}), 502
-        return jsonify({"ok": True}), 200
+            return JSONResponse(status_code=502, content={"ok": False, "error": resp.text})
+        return JSONResponse(status_code=200, content={"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
+        return JSONResponse(status_code=500, content={"ok": False, "error": str(e)})
 
 
-@app.route("/health", methods=["GET"])  # simple health endpoint
-def health():
-    return jsonify({"status": "ok"}), 200
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8081)
+@app.get("/health")
+async def health():
+    return JSONResponse(status_code=200, content={"status": "ok"})
