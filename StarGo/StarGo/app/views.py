@@ -19,6 +19,7 @@ from .models import *
 
 import requests
 import os
+from urllib.parse import urlparse
 
 STORAGE_API_URL = os.environ.get("STORAGE_API_URL", "http://127.0.0.1:8001")
 # Normalize STORAGE API base: ensure it points to the storage app root that contains the API
@@ -60,17 +61,27 @@ def ensure_image_url(obj):
     if isinstance(val, URLHolder):
         return
 
+    # Helper: convert absolute storage URL to path so Nginx /media proxy can serve it
+    def _to_public_path(u: str) -> str:
+        try:
+            parsed = urlparse(u)
+            if parsed.path:
+                return parsed.path
+        except Exception:
+            pass
+        return u
+
     # If it's a plain string (unlikely for FieldFile access, but handle it)
     if isinstance(val, str):
         if val.startswith('http://') or val.startswith('https://'):
-            obj.imageurl = URLHolder(val)
+            obj.imageurl = URLHolder(_to_public_path(val))
         return
 
     # FieldFile-like object: check .name for an absolute URL
     try:
         name = getattr(val, 'name', None)
         if isinstance(name, str) and (name.startswith('http://') or name.startswith('https://')):
-            obj.imageurl = URLHolder(name)
+            obj.imageurl = URLHolder(_to_public_path(name))
     except Exception:
         return
 
@@ -370,6 +381,13 @@ def places(request):
     ))
 
     # profileowner = get_object_or_404(User, username=username)
+
+    # Normalize image URLs so templates can use .imageurl.url
+    for p in places:
+        try:
+            ensure_image_url(p)
+        except Exception:
+            pass
 
     context = {
         'place_data': place_data,

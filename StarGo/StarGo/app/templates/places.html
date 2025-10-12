@@ -60,7 +60,7 @@
                     
                     <!-- Use img-top class for better placement -->
                     {% if place.imageurl %}
-                        <img src="{{ place.imageurl }}" class="card-img-top" alt="{{ place.name }}" style="height: 200px; object-fit: cover;">
+                        <img src="{{ place.imageurl.url }}" class="card-img-top" alt="{{ place.name }}" style="height: 200px; object-fit: cover;">
                     {% else %}
                         <img src="{% static 'default-place.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
                     {% endif %}
