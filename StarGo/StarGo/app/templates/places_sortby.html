@@ -170,7 +170,9 @@
                     
                     <!-- ใช้โครงสร้างใหม่นี้สำหรับ Star Rating -->
                     <div class="star-rating">
-                        {% for radio in form.rating %}
+                        {# Iterate in reverse so the first (leftmost) visible star corresponds to the highest value #}
+                        <!-- ! แก้ 1410 -->
+                        {% for radio in form.rating reversed %}
                             {{ radio.tag }} <!-- input radio ที่ถูกซ่อน -->
                             <label for="{{ radio.id_for_label }}"></label> <!-- label ที่จะกลายเป็นดาว (ไม่ต้องมีข้อความ) -->
                         {% endfor %}
